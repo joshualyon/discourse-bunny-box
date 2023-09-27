@@ -13,6 +13,8 @@ api.decorateCookedElement(
                 
             frame.allowFullscreen = true; //allow the user to maximize this video
             
+            //update the URL (disable autoplay)
+            updateBunnyUrl(frame);
             
             //if we don't have the height and width, we can still at least use a default ratio (reset *both*)
             if(!width || !height){
@@ -50,8 +52,28 @@ api.decorateCookedElement(
             
         }
     }
- );
- 
+);
+    
+function updateBunnyUrl(iframe){
+    //if the iframe or src or missing, just skip this part
+    if(!iframe?.src)
+        return
+    
+    //if the browser doesn't support search params (eg. iOS 9.x), skip this part
+    if (!window.URLSearchParams)
+        return
+
+    
+    let url = new URL(iframe.src)
+    
+    //disable autoplay and preload
+    url.searchParams.set("autoplay", "false")
+    url.searchParams.set("preload", "false")
+    
+    // Update the iframe src with the modified URL
+    iframe.src = url.href;
+}
+    
 //  api.addPostTransformCallback(post => {
 //     console.debug(post); 
 //  }) 
