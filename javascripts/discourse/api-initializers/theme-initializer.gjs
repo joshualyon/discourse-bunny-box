@@ -1,0 +1,83 @@
+import { apiInitializer } from "discourse/lib/api";
+
+export default apiInitializer((api) => {
+    // Your code here
+    const BUNNY_BASE = "https://iframe.mediadelivery.net/"
+    const SUPPORTS_ASPECT_RATIO = window?.CSS?.supports?.('aspect-ratio', '16/9') ?? false;
+    
+    api.decorateCookedElement(
+        elem => { 
+            let iframes = elem.querySelectorAll('iframe[src]')
+            for(let frame of iframes){
+                let {src, height, width} = frame;
+                //we need the src to validate our target height/width to calculate the ratio
+                if(!src || !src.startsWith(BUNNY_BASE))
+                    continue;
+                    
+                frame.allowFullscreen = true; //allow the user to maximize this video
+                
+                //update the URL (disable autoplay)
+                updateBunnyUrl(frame);
+                
+                //if we don't have the height and width, we can still at least use a default ratio (reset *both*)
+                if(!width || !height){
+                    width = 16;
+                    height = 9;
+                }
+                
+                
+                //if the modern aspect-ratio CSS property is supported, use it
+                if(SUPPORTS_ASPECT_RATIO){
+                    frame.style.aspectRatio = `${width}/${height}`
+                    frame.style.height = 'auto'
+                    frame.style.width = '100%'
+                }
+                //otherwise fallback to using the magic padding approach
+                else{
+                    //have to add a wrapper with the desired padding trick
+                    //and set the item height/width and absolute positioning
+                    
+                    // Create a wrapper div
+                    const wrapper = document.createElement('div');
+                    wrapper.classList.add('scalable-wrapper') //this class applied the default styles to resize things
+                    
+                    // Set the wrapper styles for aspect-ratio scaling
+                    let ratio = 1/(width/height);
+                    let pct = (ratio*100).toFixed(2)
+                    wrapper.style.paddingBottom = `${pct}%`; // override the default 16:9 aspect ratio
+                    
+                    // Insert the wrapper right before the iframe in the DOM tree
+                    frame.parentNode.insertBefore(wrapper, frame);
+                    
+                    // Move the iframe into the wrapper
+                    wrapper.appendChild(frame);
+                }
+                
+            }
+        }
+    );
+        
+    function updateBunnyUrl(iframe){
+        //if the iframe or src or missing, just skip this part
+        if(!iframe?.src)
+            return
+        
+        //if the browser doesn't support search params (eg. iOS 9.x), skip this part
+        if (!window.URLSearchParams)
+            return
+    
+        
+        let url = new URL(iframe.src)
+        
+        //disable autoplay and preload
+        url.searchParams.set("autoplay", "false")
+        url.searchParams.set("preload", "false")
+        
+        // Update the iframe src with the modified URL
+        iframe.src = url.href;
+    }
+        
+    //  api.addPostTransformCallback(post => {
+    //     console.debug(post); 
+    //  }) 
+});
