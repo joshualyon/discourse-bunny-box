@@ -2,7 +2,8 @@ import { apiInitializer } from "discourse/lib/api";
 
 export default apiInitializer((api) => {
     // Your code here
-    const BUNNY_BASE = "https://iframe.mediadelivery.net/"
+    const BUNNY_BASE = "https://iframe.mediadelivery.net/"  //old player format;
+    const PLAYER_BASE = "https://player.mediadelivery.net/" //new player format; has /play/ and /embed/
     const SUPPORTS_ASPECT_RATIO = window?.CSS?.supports?.('aspect-ratio', '16/9') ?? false;
     
     api.decorateCookedElement(
@@ -11,7 +12,7 @@ export default apiInitializer((api) => {
             for(let frame of iframes){
                 let {src, height, width} = frame;
                 //we need the src to validate our target height/width to calculate the ratio
-                if(!src || !src.startsWith(BUNNY_BASE))
+                if(!src || (!src.startsWith(BUNNY_BASE) && !src.startsWith(PLAYER_BASE)))
                     continue;
                     
                 frame.allowFullscreen = true; //allow the user to maximize this video
